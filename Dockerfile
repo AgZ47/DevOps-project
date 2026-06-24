@@ -10,7 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt || true
 COPY . .
 
 # Security Best Practice: Run as non-root user (Prevents some Checkov/Trivy flags)
-RUN useradd -m appuser && chown -R appuser /app
+RUN adduser -D appuser && chown -R appuser /app
 USER appuser
 
 # Dummy entrypoint
