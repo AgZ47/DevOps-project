@@ -1,0 +1,96 @@
+name: Gemini AI PR Reviewer
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  review:
+    name: AI Code Review
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write # Required to post comments on the PR
+      contents: read # Required to read the code
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required to fetch all history for the git diff
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Google Generative AI SDK
+        run: pip install google-generativeai
+
+      - name: Generate Git Diff
+        run: |
+          # Compare the target branch with the incoming PR branch
+          git diff origin/${{ github.base_ref }}...HEAD > pr_diff.txt
+
+      - name: Analyze Diff with Gemini
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python -c '
+          import os, sys
+          import google.generativeai as genai
+
+          # Configure the API
+          genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+
+          # Using gemini-2.5-flash as it is lightning fast and perfect for this task
+          model = genai.GenerativeModel("gemini-2.5-flash")
+
+          # Read the diff
+          try:
+              with open("pr_diff.txt", "r") as f:
+                  diff = f.read()
+          except FileNotFoundError:
+              print("Error: pr_diff.txt not found.")
+              sys.exit(1)
+
+          if not diff.strip():
+              print("No changes detected in diff.")
+              sys.exit(0)
+
+          # Truncate diff to avoid hitting token limits on massive PRs (safeguard)
+          truncated_diff = diff[:20000]
+
+          prompt = f"""
+          You are a Senior DevOps Engineer reviewing a Pull Request.
+          Please analyze the following git diff. 
+          1. Provide a very brief summary of what changed.
+          2. Explicitly call out any architectural risks, security flaws, or missing best practices (especially regarding Docker, Terraform, Kubernetes, or CI/CD pipelines).
+
+          Format your response in clean Markdown.
+
+          Here is the git diff:
+          ```diff
+          {truncated_diff}
+          ```
+          """
+
+          try:
+              response = model.generate_content(prompt)
+              with open("review.md", "w") as f:
+                  # Add a badge to indicate it is an AI review
+                  f.write("### 🤖 Gemini AI Code Review\n\n" + response.text)
+          except Exception as e:
+              print(f"Failed to generate review: {e}")
+              sys.exit(1)
+          '
+
+      - name: Post Review as PR Comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Built-in GitHub token
+        run: |
+          # Check if review.md was created and is not empty before commenting
+          if [ -s review.md ]; then
+            gh pr comment ${{ github.event.pull_request.number }} --body-file review.md
+          else
+            echo "No review generated to post."
+          fi
