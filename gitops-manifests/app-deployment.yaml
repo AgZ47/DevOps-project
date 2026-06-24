@@ -1,0 +1,48 @@
+# gitops-manifests/app-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: python-microservice
+  namespace: app
+  labels:
+    app: python-microservice
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: python-microservice
+  template:
+    metadata:
+      labels:
+        app: python-microservice
+    spec:
+      containers:
+        - name: microservice
+          image: python:3.11-alpine
+          command: ["python", "-m", "http.server", "8000"]
+          ports:
+            - containerPort: 8000
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "64Mi"
+            limits:
+              cpu: "250m"
+              memory: "128Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: python-microservice
+  namespace: app
+spec:
+  selector:
+    app: python-microservice
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+  type: ClusterIP
