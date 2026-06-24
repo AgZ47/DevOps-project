@@ -1,8 +1,10 @@
-**Prompt**
+**Prompt Used:**
 
-write a simple terraform script to setup a local kubernetes cluster using minikube.
+> "Write a simple terraform script to set up a local Kubernetes cluster using minikube."
 
-**Fixes**
+**The "Catch" / Manual Corrections Made:**
+I reviewed the AI-generated code and made several manual architectural and security corrections to align with production best practices:
 
-1. Moved all hardcoded values into variables that can be edited easily
-2. Removed kubernetes deployment scripts as it would be a part of ArgoCD
+1. **Architectural Realignment (GitOps Strictness):** The AI originally included Kubernetes `Deployment` and `Service` resources inside the Terraform script. I manually removed these. Terraform's responsibility was strictly limited to infrastructure provisioning, delegating the application deployment entirely to ArgoCD.
+
+2. **Variable Extraction:** The AI hardcoded values directly into `main.tf`. I refactored the code, extracting these into a `variables.tf` file to make the infrastructure modular and reusable.
