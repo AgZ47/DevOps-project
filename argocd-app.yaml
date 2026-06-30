@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: "https://github.com/AgZ47/Valoriz-Assignment" # UPDATE THIS
+    repoURL: "https://github.com/AgZ47/Valoriz-Assignment"
     targetRevision: HEAD
     path: gitops-manifests
   destination:

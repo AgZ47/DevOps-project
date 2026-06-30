@@ -30,10 +30,10 @@ provider "minikube" {
 # ----------------------------------------------------------
 resource "minikube_cluster" "this" {
   cluster_name       = var.cluster_name
-  driver             = var.driver # docker | virtualbox | hyperkit | none
+  driver             = var.driver
   cpus               = var.cpus
-  memory             = var.memory_mb # in MiB
-  disk_size          = var.disk_size # e.g. "20000mb"
+  memory             = var.memory_mb
+  disk_size          = var.disk_size
   kubernetes_version = var.kubernetes_version
 
   addons = var.addons

@@ -11,6 +11,11 @@ jobs:
     name: IaC Linting and Security
     runs-on: ubuntu-latest
     steps:
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
       - name: Checkout Code
         uses: actions/checkout@v4
 
@@ -34,6 +39,11 @@ jobs:
     name: Docker Build and Scan
     runs-on: ubuntu-latest
     steps:
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
       - name: Checkout Code
         uses: actions/checkout@v4
 
